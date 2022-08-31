@@ -9,6 +9,7 @@ class Blockchain(object):
 		self.chain = []
 		self.current_transactions = []
 		self.nodes = set()
+		self.end_hash = "42"
 
 		self.new_block(previous_hash=1, proof=100)
         
@@ -44,21 +45,24 @@ class Blockchain(object):
 	def last_block(self):
 		return self.chain[-1]
 
-	def proof_of_work(self, last_proof):
+	def proof_of_work(self, last_proof=None):
 
-		proof = 0
-		while self.valid_proof(last_proof, proof) is False:
+		proof = last_proof
+		self.end_hash = str("42" * (1 + (len(self.chain) // 10)))
+		while self.valid_proof(last_proof, proof, self.end_hash) is False:
 			proof += 1
 
 		return proof
 
 	
 	@staticmethod
-	def valid_proof(last_proof, proof):
+	def valid_proof(last_proof, proof, end_hash):
 
 		guess = f'{last_proof}{proof}'.encode()
 		guess_hash = hashlib.sha256(guess).hexdigest()
-		return guess_hash[:4] == "4242"
+		if(guess_hash[(-1) * (len(end_hash)):] == end_hash):
+			print(guess_hash)
+		return guess_hash[(-1) * (len(end_hash)):] == end_hash
 
 
 	def register_node(self, address):
@@ -81,7 +85,7 @@ class Blockchain(object):
 			if block['previous_hash'] != self.hash(last_block):
 				return False
 
-			if not self.valid_proof(last_block['proof'], block['proof']):
+			if not self.valid_proof(last_block['proof'], block['proof'], self.end_hash):
 				return False
 
 			last_block = block
